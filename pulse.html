@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chicago Station Pulse — Live Data Pipeline — Lester Harvey</title>
+  <meta name="description" content="A live, zero-cost data pipeline: Divvy GBFS ingestion every 30 minutes with blocking quality gates, DuckDB SQL transforms, and this dashboard reading the output." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Sora:wght@300;400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .report-hero {
+      min-height: 78vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 140px clamp(24px, 9vw, 160px) 70px;
+      background:
+        radial-gradient(70% 55% at 70% 25%, rgba(232, 176, 75, 0.12), transparent 60%),
+        var(--bg);
+    }
+    .report-hero h1 { font-family: "Unbounded", sans-serif; font-weight: 800; font-size: clamp(1.9rem, 4.6vw, 4rem); line-height: 1.14; max-width: 16ch; }
+    .report-hero .sub { margin-top: 30px; max-width: 60ch; color: var(--ink-dim); font-weight: 300; font-size: 1.05rem; line-height: 1.8; }
+    .meta-chips { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 40px; }
+    .chip { font-family: "Unbounded", sans-serif; font-size: 10px; letter-spacing: 0.22em; color: var(--gold-hi); border: 1px solid var(--hair); border-radius: 999px; padding: 9px 16px; }
+    .live-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #5fd97a; margin-right: 9px; box-shadow: 0 0 12px rgba(95, 217, 122, 0.8); animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+    .rsec { padding: 100px clamp(24px, 9vw, 160px); }
+    .rsec.alt { background: var(--bg-2); }
+    .rsec h2 { font-family: "Unbounded", sans-serif; font-weight: 600; font-size: clamp(1.3rem, 2.6vw, 2rem); max-width: 30ch; line-height: 1.3; margin-bottom: 18px; }
+    .rsec .lead { color: var(--ink-dim); font-weight: 300; max-width: 62ch; line-height: 1.8; }
+    .chart-wrap { margin-top: 44px; }
+    .chart-wrap svg { width: 100%; height: auto; display: block; }
+    .axis-label { font-family: "Unbounded", sans-serif; font-size: 9px; letter-spacing: 0.14em; fill: rgba(242,237,228,0.45); }
+    .grid-line { stroke: rgba(232,176,75,0.09); stroke-width: 1; }
+    .anno { font-family: "Unbounded", sans-serif; font-size: 9.5px; letter-spacing: 0.12em; fill: #e8b04b; }
+    .updated { font-family: "Unbounded", sans-serif; font-size: 10px; letter-spacing: 0.22em; color: rgba(242,237,228,0.4); margin-top: 18px; }
+    /* health panel */
+    .health { margin-top: 44px; border: 1px solid var(--hair); border-radius: 14px; overflow: hidden; }
+    .health-head { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 20px 26px; background: rgba(232,176,75,0.05); font-family: "Unbounded", sans-serif; font-size: 11px; letter-spacing: 0.22em; }
+    .health-head .ok { color: #5fd97a; }
+    .health-row { display: flex; justify-content: space-between; gap: 14px; padding: 15px 26px; border-top: 1px solid var(--hair); font-weight: 300; color: var(--ink-dim); font-size: 0.95rem; flex-wrap: wrap; }
+    .health-row .mark { font-family: "Unbounded", sans-serif; font-size: 10px; letter-spacing: 0.18em; }
+    .mark.pass { color: #5fd97a; }
+    .mark.fail { color: #e86a4b; }
+    .health-meta { display: flex; gap: 30px; flex-wrap: wrap; padding: 18px 26px; border-top: 1px solid var(--hair); font-family: "Unbounded", sans-serif; font-size: 10px; letter-spacing: 0.2em; color: rgba(242,237,228,0.45); }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 50px; align-items: center; }
+    .arch { list-style: none; margin-top: 34px; }
+    .arch li { display: grid; grid-template-columns: 46px 1fr; gap: 18px; padding: 20px 0; border-top: 1px solid var(--hair); color: var(--ink-dim); font-weight: 300; line-height: 1.7; }
+    .arch li:last-child { border-bottom: 1px solid var(--hair); }
+    .arch b { font-family: "Unbounded", sans-serif; font-size: 11px; color: var(--gold); letter-spacing: 0.12em; }
+    .arch span b { color: var(--ink); font-family: "Sora", sans-serif; font-weight: 600; font-size: 1rem; letter-spacing: 0; }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <span class="nav-brand">LESTER<span class="dim">®</span>HARVEY</span>
+    <span class="nav-mid">LIVE DATA PIPELINE — DIVVY GBFS · 30-MIN CRON</span>
+    <a class="nav-cta" href="index.html">← PORTFOLIO</a>
+  </nav>
+
+  <header class="report-hero">
+    <p class="eyebrow reveal"><span class="live-dot"></span>LIVE PIPELINE · UPDATES EVERY 30 MINUTES</p>
+    <h1 class="reveal">CHICAGO STATION <em>PULSE.</em></h1>
+    <p class="sub reveal">The real-time sequel to the <a class="inline-link" href="cyclistic.html">Cyclistic analysis</a>:
+       that project studied 6.2M historical rides — this one runs a living pipeline on the same system. Every 30 minutes,
+       a scheduled job ingests Divvy's live station feed, forces it through five blocking quality gates, transforms it
+       with SQL, and publishes what you see below. No servers, no cost — engineering in public.</p>
+    <div class="meta-chips reveal">
+      <span class="chip">PYTHON</span>
+      <span class="chip">DUCKDB SQL</span>
+      <span class="chip">GITHUB ACTIONS CRON</span>
+      <span class="chip">QUALITY GATES</span>
+      <span class="chip">2,000+ STATIONS</span>
+    </div>
+  </header>
+
+  <!-- KPIs (populated live) -->
+  <section class="stats" id="kpis">
+    <div class="stat"><span class="stat-num" id="k-stations">—</span><span class="stat-label">STATIONS ONLINE</span></div>
+    <div class="stat"><span class="stat-num" id="k-bikes">—</span><span class="stat-label">BIKES READY TO RIDE</span></div>
+    <div class="stat"><span class="stat-num" id="k-ebikes">—</span><span class="stat-label">ELECTRIC BIKES</span></div>
+    <div class="stat"><span class="stat-num" id="k-empty">—</span><span class="stat-label">STATIONS EMPTY RIGHT NOW</span></div>
+  </section>
+
+  <!-- Trend -->
+  <section class="rsec">
+    <p class="eyebrow reveal">01 — SEVEN-DAY PULSE</p>
+    <h2 class="reveal">Citywide bikes available, every 30 minutes.</h2>
+    <p class="lead reveal">Each point is one pipeline run. The daily heartbeat — bikes drained by the morning commute,
+       rebalanced overnight — emerges as the rolling window fills.</p>
+    <div class="chart-wrap reveal"><svg id="trend" viewBox="0 0 860 380" role="img" aria-label="Citywide bikes available over the last seven days"></svg></div>
+    <p class="updated" id="trend-note"></p>
+  </section>
+
+  <!-- Top stations -->
+  <section class="rsec alt">
+    <p class="eyebrow reveal">02 — BUSIEST DOCKS RIGHT NOW</p>
+    <h2 class="reveal">Where the bikes are, this half-hour.</h2>
+    <div class="chart-wrap reveal"><svg id="topstations" viewBox="0 0 860 560" role="img" aria-label="Top stations by bikes available right now"></svg></div>
+    <p class="updated" id="stations-note"></p>
+  </section>
+
+  <!-- Pipeline health -->
+  <section class="rsec">
+    <p class="eyebrow reveal">03 — PIPELINE HEALTH</p>
+    <h2 class="reveal">Every run validates before it publishes.</h2>
+    <p class="lead reveal">Five blocking quality gates run on every ingestion. If any gate fails, the run exits non-zero,
+       nothing is published, and the failure is public in the run log — bad data breaks the pipeline, never the dashboard.</p>
+    <div class="health reveal" id="health">
+      <div class="health-head"><span>LAST RUN — QUALITY GATES</span><span class="ok" id="health-status">LOADING…</span></div>
+    </div>
+    <div class="cta-row reveal">
+      <a class="work-link" href="https://github.com/Dion-Harvey/divvy-station-pulse" target="_blank" rel="noopener">PIPELINE SOURCE ON GITHUB ↗</a>
+      <a class="work-link" href="https://github.com/Dion-Harvey/divvy-station-pulse/actions" target="_blank" rel="noopener">PUBLIC RUN LOG ↗</a>
+    </div>
+  </section>
+
+  <!-- Architecture -->
+  <section class="rsec alt">
+    <p class="eyebrow reveal">04 — HOW IT'S BUILT</p>
+    <h2 class="reveal">Zero cost. Zero servers. Bounded forever.</h2>
+    <ul class="arch">
+      <li class="reveal"><b>01</b><span><b>Ingest.</b> GitHub Actions cron fires every 30 minutes; Python pulls Divvy's GBFS station status and metadata — ~2,000 stations, ~4,000 rows per run.</span></li>
+      <li class="reveal"><b>02</b><span><b>Validate.</b> Five blocking gates: station count in range, feed freshness under 30 minutes, join coverage ≥ 99%, no negative counts, citywide totals sane. Fail loud, publish nothing.</span></li>
+      <li class="reveal"><b>03</b><span><b>Transform.</b> DuckDB executes the SQL layer — an active-stations view joining both feeds, then citywide KPI and top-station aggregations. Joins live in SQL, not Python loops.</span></li>
+      <li class="reveal"><b>04</b><span><b>Publish.</b> Compact JSON artifacts force-pushed as a single commit to a data branch — bounded repo size, served free with CORS. This page fetches them directly; a 7-day rolling window keeps history without growth.</span></li>
+    </ul>
+    <div class="cta-row reveal">
+      <a class="work-link" href="cyclistic.html">PART 1: THE CYCLISTIC ANALYSIS ↗</a>
+      <a class="work-link" href="index.html">← BACK TO PORTFOLIO</a>
+    </div>
+  </section>
+
+  <footer class="outro" style="min-height:auto; padding-top:70px;">
+    <footer>
+      <span>© 2026 LESTER HARVEY</span>
+      <span>LIVE DATA: DIVVY / LYFT GBFS — PIPELINE: PYTHON · DUCKDB · GITHUB ACTIONS</span>
+      <span id="foot-updated">—</span>
+    </footer>
+  </footer>
+
+  <script src="https://unpkg.com/lenis@1.3.21/dist/lenis.min.js"></script>
+  <script>window.SCRUB_SECTIONS = [];</script>
+  <script src="scroll-cinematic.js"></script>
+  <script>
+  const BASE = "https://raw.githubusercontent.com/Dion-Harvey/divvy-station-pulse/data/";
+  const GOLD = "#e8b04b", NS = "http://www.w3.org/2000/svg";
+  function el(n, a, p) { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; }
+  const get = (f) => fetch(BASE + f + "?t=" + Math.floor(Date.now() / 300000)).then(r => { if (!r.ok) throw new Error(f); return r.json(); });
+  const fmt = (n) => n.toLocaleString("en-US");
+  const ct = (iso) => new Date(iso).toLocaleString("en-US", { timeZone: "America/Chicago", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " CT";
+
+  function setKpis(latest) {
+    const pairs = [["k-stations", latest.stations_online], ["k-bikes", latest.bikes_available], ["k-ebikes", latest.ebikes_available], ["k-empty", Math.round(latest.stations_online * latest.pct_stations_empty / 100)]];
+    pairs.forEach(([id, v]) => {
+      const node = document.getElementById(id);
+      const t0 = performance.now(), dur = 1400;
+      (function step(t) {
+        const k = Math.min((t - t0) / dur, 1), e = 1 - Math.pow(1 - k, 3);
+        node.textContent = fmt(Math.round(v * e));
+        if (k < 1) requestAnimationFrame(step);
+      })(t0);
+    });
+    document.getElementById("foot-updated").textContent = "LAST PIPELINE RUN: " + ct(latest.generated_at).toUpperCase();
+  }
+
+  function drawTrend(history) {
+    const svg = document.getElementById("trend");
+    const x0 = 70, y0 = 20, w = 770, h = 300;
+    const vals = history.map(p => p.bikes);
+    const maxV = Math.max(...vals) * 1.15 || 100;
+    for (let i = 0; i <= 4; i++) {
+      const y = y0 + h - h * i / 4;
+      el("line", { x1: x0, y1: y, x2: x0 + w, y2: y, class: "grid-line" }, svg);
+      const t = el("text", { x: x0 - 10, y: y + 3, "text-anchor": "end", class: "axis-label" }, svg);
+      t.textContent = Math.round(maxV * i / 4 / 1000 * 10) / 10 + "K";
+    }
+    const n = Math.max(vals.length, 2);
+    let d = "";
+    vals.forEach((v, i) => {
+      const x = x0 + w * i / (336 - 1), y = y0 + h - h * v / maxV;
+      d += (i ? " L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
+    });
+    if (vals.length === 1) {
+      el("circle", { cx: x0, cy: y0 + h - h * vals[0] / maxV, r: 6, fill: GOLD }, svg);
+    } else {
+      const p = el("path", { d, fill: "none", stroke: GOLD, "stroke-width": 2.5, "stroke-linecap": "round" }, svg);
+      const len = p.getTotalLength(); p.style.strokeDasharray = len; p.style.strokeDashoffset = len;
+      p.style.transition = "stroke-dashoffset 1.6s ease-out 0.2s";
+      requestAnimationFrame(() => requestAnimationFrame(() => p.style.strokeDashoffset = 0));
+    }
+    history.forEach((pt, i) => {
+      if (i % 48 === 0) {
+        const x = x0 + w * i / (336 - 1);
+        const t = el("text", { x, y: y0 + h + 24, "text-anchor": "middle", class: "axis-label" }, svg);
+        t.textContent = new Date(pt.t).toLocaleDateString("en-US", { timeZone: "America/Chicago", weekday: "short" }).toUpperCase();
+      }
+    });
+    const pct = Math.round(history.length / 336 * 100);
+    document.getElementById("trend-note").textContent =
+      history.length >= 336 ? "FULL 7-DAY WINDOW · " + history.length + " PIPELINE RUNS"
+      : "COLLECTING HISTORY — " + history.length + " OF 336 RUNS CAPTURED (" + pct + "% OF THE 7-DAY WINDOW)";
+  }
+
+  function drawStations(stations) {
+    const svg = document.getElementById("topstations");
+    const x0 = 320, w = 440, rowH = 36, bh = 15;
+    const maxV = Math.max(...stations.map(s => s.bikes)) * 1.1;
+    stations.forEach((s, i) => {
+      const y = 20 + i * rowH;
+      const t = el("text", { x: x0 - 16, y: y + bh - 3, "text-anchor": "end", class: "axis-label", style: "fill: rgba(242,237,228,0.75); font-size: 10.5px;" }, svg);
+      t.textContent = s.name.toUpperCase();
+      const bw = w * s.bikes / maxV, ew = w * s.ebikes / maxV;
+      const r1 = el("rect", { x: x0, y, width: 0, height: bh, rx: 3, fill: "rgba(232,176,75,0.35)" }, svg);
+      const r2 = el("rect", { x: x0, y, width: 0, height: bh, rx: 3, fill: GOLD }, svg);
+      r1.style.transition = r2.style.transition = "width 0.9s cubic-bezier(.2,.8,.2,1) " + (i * 0.04) + "s";
+      requestAnimationFrame(() => requestAnimationFrame(() => { r1.setAttribute("width", bw); r2.setAttribute("width", ew); }));
+      const v = el("text", { x: x0 + bw + 10, y: y + bh - 3, class: "anno" }, svg);
+      v.textContent = s.bikes + " (" + s.ebikes + " E)";
+    });
+    const lg = el("text", { x: x0, y: 20 + stations.length * rowH + 14, class: "axis-label" }, svg);
+    lg.textContent = "SOLID = ELECTRIC · TINT = TOTAL BIKES AVAILABLE";
+  }
+
+  function renderHealth(q) {
+    const box = document.getElementById("health");
+    document.getElementById("health-status").textContent = q.passed ? "ALL GATES PASSED" : "GATE FAILURE";
+    document.getElementById("health-status").className = q.passed ? "ok" : "mark fail";
+    q.checks.forEach(c => {
+      const row = document.createElement("div"); row.className = "health-row";
+      row.innerHTML = "<span>" + c.check.replaceAll("_", " ").toUpperCase() + " — <i style='font-style:normal;opacity:0.7'>" + c.observed + "</i></span>" +
+        "<span class='mark " + (c.passed ? "pass" : "fail") + "'>" + (c.passed ? "PASS" : "FAIL") + "</span>";
+      box.appendChild(row);
+    });
+    const meta = document.createElement("div"); meta.className = "health-meta";
+    meta.innerHTML = "<span>ROWS PROCESSED: " + fmt(q.rows_processed) + "</span><span>RUNTIME: " + q.runtime_seconds + "S</span><span>RUN AT: " + ct(q.run_at).toUpperCase() + "</span>";
+    box.appendChild(meta);
+  }
+
+  Promise.all([get("latest.json"), get("history.json"), get("stations.json"), get("quality.json")])
+    .then(([latest, history, stations, quality]) => {
+      setKpis(latest); drawTrend(history); drawStations(stations); renderHealth(quality);
+    })
+    .catch(() => {
+      document.getElementById("health-status").textContent = "DATA TEMPORARILY UNAVAILABLE — SEE RUN LOG";
+      document.getElementById("trend-note").textContent = "PIPELINE DATA UNAVAILABLE — THE PUBLIC RUN LOG ON GITHUB SHOWS CURRENT STATUS";
+    });
+  </script>
+</body>
+</html>
