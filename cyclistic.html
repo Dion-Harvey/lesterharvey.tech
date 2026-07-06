@@ -189,9 +189,23 @@
     </div>
   </section>
 
-  <!-- ============ RECOMMENDATIONS ============ -->
+  <!-- ============ CHART 5: STATIONS ============ -->
   <section class="rsec alt">
-    <p class="eyebrow reveal">06 — RECOMMENDATIONS</p>
+    <p class="eyebrow reveal">06 — WHERE THEY RIDE</p>
+    <h2 class="reveal">The lakefront belongs to casuals. The Loop belongs to members.</h2>
+    <p class="lead reveal">Every top casual dock is a tourist landmark — Navy Pier, Shedd Aquarium, Millennium Park,
+       the Lake Shore Drive waterfront. Every top member dock sits in the Loop's commuter core, with the Clinton Street
+       corridor — directly beside Ogilvie and Union Station — running up to 83% member. Geography confirms the behavioral
+       story: leisure at the water, last-mile commuting at the terminals. It also hands marketing a literal target map
+       for in-app weekend offers.</p>
+    <div class="chart-wrap reveal" data-chart="stations"><svg viewBox="0 0 860 560" role="img" aria-label="Top stations by rider-type dominance, casual share left, member share right"></svg>
+      <div class="legend"><span><b class="b-casual"></b>CASUAL SHARE</span><span><b class="b-member"></b>MEMBER SHARE</span><span style="color:rgba(242,237,228,0.4)">TOP DOCKS BY VOLUME, MAY 2025 – MAY 2026</span></div>
+    </div>
+  </section>
+
+  <!-- ============ RECOMMENDATIONS ============ -->
+  <section class="rsec">
+    <p class="eyebrow reveal">07 — RECOMMENDATIONS</p>
     <h2 class="reveal">Three moves, all backed by the data above.</h2>
     <div class="rec reveal">
       <span class="rec-num">R.01</span>
@@ -247,6 +261,20 @@
     },
     dur: { member: 12.05, casual: 19.03, memberMed: 8.64, casualMed: 11.35,
            ebikeShare: { member: 65.5, casual: 68.1 } },
+    stations: [
+      ["Shedd Aquarium", 18786, 4043, "LAKEFRONT"],
+      ["Streeter Dr & Grand Ave", 19202, 4627, "LAKEFRONT"],
+      ["DuSable Lake Shore Dr & Monroe St", 35885, 9414, "LAKEFRONT"],
+      ["Navy Pier", 38662, 11560, "LAKEFRONT"],
+      ["Dusable Harbor", 17280, 6317, "LAKEFRONT"],
+      ["Millennium Park", 20814, 9255, "LAKEFRONT"],
+      ["Clinton St & Madison St", 7162, 21659, "LOOP / OGILVIE"],
+      ["Kingsbury St & Kinzie St", 7734, 23259, "RIVER NORTH"],
+      ["Canal St & Madison St", 7348, 23250, "LOOP / OGILVIE"],
+      ["Clinton St & Jackson Blvd", 5628, 19640, "LOOP / UNION STN"],
+      ["Franklin St & Monroe St", 3529, 13962, "LOOP"],
+      ["Clinton St & Washington Blvd", 4654, 22106, "LOOP / OGILVIE"],
+    ],
   };
   const GOLD = "#e8b04b", BLUE = "#7aa7d9", DIM = "rgba(242,237,228,0.45)";
   const fmtK = v => v >= 1e6 ? (v/1e6).toFixed(1)+"M" : Math.round(v/1e3)+"K";
@@ -361,7 +389,35 @@
     });
   }
 
-  const DRAW = { dow: drawDow, month: drawMonth, hour: drawHour, dur: drawDur };
+  function drawStations(svg) {
+    const cx = 430, w = 330, rowH = 44, y0 = 26, bh = 16;
+    // center axis
+    el("line", { x1: cx, y1: y0 - 8, x2: cx, y2: y0 + DATA.stations.length * rowH - 14, stroke: "rgba(242,237,228,0.18)", "stroke-width": 1 }, svg);
+    DATA.stations.forEach((s, i) => {
+      const [name, cas, mem, area] = s;
+      const total = cas + mem, cShare = cas / total, mShare = mem / total;
+      const y = y0 + i * rowH;
+      // station label above bars
+      const t = el("text", { x: cx, y: y - 4, "text-anchor": "middle", class: "axis-label", style: "fill: rgba(242,237,228,0.75); font-size: 10.5px; letter-spacing: 0.08em;" }, svg);
+      t.textContent = name.toUpperCase() + "  ·  " + area;
+      // casual bar grows left, member bar grows right
+      const cw = w * cShare, mw = w * mShare;
+      const rc = el("rect", { x: cx, y: y + 2, width: 0, height: bh, rx: 3, fill: BLUE }, svg);
+      rc.style.transition = "x 0.9s cubic-bezier(.2,.8,.2,1) " + (i * 0.05) + "s, width 0.9s cubic-bezier(.2,.8,.2,1) " + (i * 0.05) + "s";
+      const rm = el("rect", { x: cx, y: y + 2, width: 0, height: bh, rx: 3, fill: GOLD }, svg);
+      rm.style.transition = "width 0.9s cubic-bezier(.2,.8,.2,1) " + (i * 0.05) + "s";
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        rc.setAttribute("x", cx - cw); rc.setAttribute("width", cw);
+        rm.setAttribute("width", mw);
+      }));
+      const vc = el("text", { x: cx - cw - 10, y: y + bh / 2 + 6, "text-anchor": "end", class: "anno c" }, svg);
+      vc.textContent = Math.round(cShare * 100) + "%";
+      const vm = el("text", { x: cx + mw + 10, y: y + bh / 2 + 6, class: "anno" }, svg);
+      vm.textContent = Math.round(mShare * 100) + "%";
+    });
+  }
+
+  const DRAW = { dow: drawDow, month: drawMonth, hour: drawHour, dur: drawDur, stations: drawStations };
   const chartIO = new IntersectionObserver((entries) => {
     entries.forEach((e) => {
       if (!e.isIntersecting) return;
