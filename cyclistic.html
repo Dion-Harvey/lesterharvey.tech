@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cyclistic: How Members and Casual Riders Differ — Lester Harvey</title>
+  <meta name="description" content="Interactive analytics case study: 6.2M bike-share rides analyzed with Python and SQL. How annual members and casual riders differ — and three data-backed conversion strategies." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Sora:wght@300;400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ---------- report-specific ---------- */
+    .report-hero {
+      min-height: 82vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 140px clamp(24px, 9vw, 160px) 80px;
+      background:
+        radial-gradient(70% 55% at 75% 20%, rgba(232, 176, 75, 0.12), transparent 60%),
+        radial-gradient(50% 40% at 15% 85%, rgba(122, 167, 217, 0.08), transparent 60%),
+        var(--bg);
+    }
+    .report-hero h1 {
+      font-family: "Unbounded", sans-serif;
+      font-weight: 800;
+      font-size: clamp(1.9rem, 4.6vw, 4rem);
+      line-height: 1.14;
+      max-width: 18ch;
+    }
+    .report-hero .sub { margin-top: 30px; max-width: 58ch; color: var(--ink-dim); font-weight: 300; font-size: 1.05rem; line-height: 1.8; }
+    .meta-chips { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 40px; }
+    .chip {
+      font-family: "Unbounded", sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      color: var(--gold-hi);
+      border: 1px solid var(--hair);
+      border-radius: 999px;
+      padding: 9px 16px;
+    }
+    .rsec { padding: 110px clamp(24px, 9vw, 160px); }
+    .rsec.alt { background: var(--bg-2); }
+    .rsec h2 {
+      font-family: "Unbounded", sans-serif;
+      font-weight: 600;
+      font-size: clamp(1.3rem, 2.6vw, 2rem);
+      max-width: 30ch;
+      line-height: 1.3;
+      margin-bottom: 18px;
+    }
+    .rsec .lead { color: var(--ink-dim); font-weight: 300; max-width: 62ch; line-height: 1.8; margin-bottom: 8px; }
+    .chart-wrap { margin-top: 46px; }
+    .chart-wrap svg { width: 100%; height: auto; display: block; }
+    .legend { display: flex; gap: 26px; margin-top: 18px; font-family: "Unbounded", sans-serif; font-size: 10px; letter-spacing: 0.22em; color: var(--ink-dim); }
+    .legend b { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; vertical-align: -1px; }
+    .b-member { background: #e8b04b; }
+    .b-casual { background: #7aa7d9; }
+    .callout {
+      margin-top: 34px;
+      border-left: 2px solid var(--gold);
+      padding: 6px 0 6px 22px;
+      color: var(--ink-dim);
+      font-weight: 300;
+      line-height: 1.75;
+      max-width: 60ch;
+    }
+    .callout b { color: var(--gold-hi); font-weight: 600; }
+    /* cleaning table */
+    .clean-table { width: 100%; border-collapse: collapse; margin-top: 40px; }
+    .clean-table th, .clean-table td { text-align: left; padding: 16px 14px; border-top: 1px solid var(--hair); }
+    .clean-table th { font-family: "Unbounded", sans-serif; font-size: 10px; letter-spacing: 0.24em; color: var(--gold); font-weight: 600; }
+    .clean-table td { color: var(--ink-dim); font-weight: 300; }
+    .clean-table td:first-child { color: var(--ink); font-weight: 400; }
+    .clean-table tr:last-child td { border-bottom: 1px solid var(--hair); color: var(--gold-hi); font-weight: 600; }
+    .num { font-variant-numeric: tabular-nums; }
+    /* recommendations */
+    .rec { display: grid; grid-template-columns: 90px 1fr; gap: 26px; padding: 38px 0; border-top: 1px solid var(--hair); }
+    .rec:last-of-type { border-bottom: 1px solid var(--hair); }
+    .rec-num { font-family: "Unbounded", sans-serif; font-size: 12px; letter-spacing: 0.2em; color: var(--gold); }
+    .rec h3 { font-family: "Unbounded", sans-serif; font-weight: 600; font-size: clamp(1.05rem, 2vw, 1.4rem); margin-bottom: 10px; }
+    .rec p { color: var(--ink-dim); font-weight: 300; line-height: 1.75; max-width: 62ch; }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 50px; align-items: center; }
+    .axis-label { font-family: "Unbounded", sans-serif; font-size: 9px; letter-spacing: 0.14em; fill: rgba(242,237,228,0.45); }
+    .grid-line { stroke: rgba(232,176,75,0.09); stroke-width: 1; }
+    .anno { font-family: "Unbounded", sans-serif; font-size: 9.5px; letter-spacing: 0.12em; fill: #e8b04b; }
+    .anno.c { fill: #7aa7d9; }
+    @media (max-width: 640px) { .rec { grid-template-columns: 1fr; gap: 8px; } }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <span class="nav-brand">LESTER<span class="dim">®</span>HARVEY</span>
+    <span class="nav-mid">CASE STUDY — GOOGLE DATA ANALYTICS CAPSTONE</span>
+    <a class="nav-cta" href="index.html">← PORTFOLIO</a>
+  </nav>
+
+  <!-- ============ HERO ============ -->
+  <header class="report-hero">
+    <p class="eyebrow reveal">INTERACTIVE REPORT · 12 MONTHS OF DIVVY TRIP DATA</p>
+    <h1 class="reveal">CYCLISTIC: HOW MEMBERS AND CASUAL RIDERS <em>DIFFER.</em></h1>
+    <p class="sub reveal">Cyclistic's marketing team wants to convert casual riders into more-profitable
+       annual members. This analysis answers one question — how do the two groups actually use the bikes
+       differently? — and turns the answer into a targeted conversion strategy. Every chart below is drawn
+       live from the analysis output.</p>
+    <div class="meta-chips reveal">
+      <span class="chip">6.2M RIDES</span>
+      <span class="chip">PYTHON · PANDAS</span>
+      <span class="chip">SQL</span>
+      <span class="chip">TABLEAU</span>
+      <span class="chip">MAY 2025 — MAY 2026</span>
+    </div>
+  </header>
+
+  <!-- ============ KPIs ============ -->
+  <section class="stats">
+    <div class="stat"><span class="stat-num" data-count="6.2" data-suffix="M">0</span><span class="stat-label">CLEAN RIDES ANALYZED</span></div>
+    <div class="stat"><span class="stat-num" data-count="64" data-suffix="%">0</span><span class="stat-label">MEMBER RIDE SHARE</span></div>
+    <div class="stat"><span class="stat-num" data-count="58" data-suffix="%">0</span><span class="stat-label">LONGER CASUAL RIDES (AVG)</span></div>
+    <div class="stat"><span class="stat-num" data-count="0.10" data-suffix="%">0</span><span class="stat-label">RECORDS REMOVED IN CLEANING</span></div>
+  </section>
+
+  <!-- ============ METHOD ============ -->
+  <section class="rsec">
+    <p class="eyebrow reveal">01 — DATA &amp; METHOD</p>
+    <h2 class="reveal">6,213,372 raw rides in. 6,207,100 clean rides out. Every removal logged.</h2>
+    <p class="lead reveal">A Python (pandas) pipeline processed each monthly file individually for memory safety,
+       logging every transformation with before/after row counts. A pre-clean audit flagged issues, each step removed
+       only what was documented, and post-clean assertions re-verify the output — failing loudly on any violation.</p>
+    <table class="clean-table reveal">
+      <thead><tr><th>CHECK</th><th class="num">RECORDS</th><th>ACTION</th></tr></thead>
+      <tbody>
+        <tr><td>Raw rides loaded</td><td class="num">6,213,372</td><td>—</td></tr>
+        <tr><td>Duplicate ride IDs</td><td class="num">28</td><td>Removed</td></tr>
+        <tr><td>Ride length ≤ 0</td><td class="num">29</td><td>Removed</td></tr>
+        <tr><td>Ride length &gt; 24h</td><td class="num">6,215</td><td>Removed (system error)</td></tr>
+        <tr><td>Null station names</td><td class="num">1,328,474</td><td>Retained — not needed for this comparison</td></tr>
+        <tr><td>Clean rides</td><td class="num">6,207,100</td><td>0.10% removed total</td></tr>
+      </tbody>
+    </table>
+    <p class="callout reveal">Retaining rides with missing station names was a deliberate judgment call:
+       station is irrelevant to the member-vs-casual comparison, and dropping ~21% of the data would have
+       distorted volume patterns. <b>Documenting that decision is part of keeping the analysis honest.</b></p>
+  </section>
+
+  <!-- ============ CHART 1: DAY OF WEEK ============ -->
+  <section class="rsec alt">
+    <p class="eyebrow reveal">02 — RHYTHM OF THE WEEK</p>
+    <h2 class="reveal">Members commute. Casuals cruise the weekend.</h2>
+    <p class="lead reveal">Member volume peaks Tuesday–Thursday and sags on weekends. Casual volume does the
+       opposite — nearly doubling from midweek to Saturday. Two different products are being consumed on the same bikes.</p>
+    <div class="chart-wrap reveal" data-chart="dow"><svg viewBox="0 0 860 400" role="img" aria-label="Rides by day of week, members versus casual riders"></svg>
+      <div class="legend"><span><b class="b-member"></b>MEMBER</span><span><b class="b-casual"></b>CASUAL</span></div>
+    </div>
+  </section>
+
+  <!-- ============ CHART 2: MONTHLY ============ -->
+  <section class="rsec">
+    <p class="eyebrow reveal">03 — THE SEASONAL CLIFF</p>
+    <h2 class="reveal">Winter dents member riding. It nearly erases casual riding.</h2>
+    <p class="lead reveal">Both groups decline in winter, but December tells the story: ~112K member rides against
+       ~28K casual. Casual demand is a warm-weather phenomenon — which is exactly when conversion spend should concentrate.</p>
+    <div class="chart-wrap reveal" data-chart="month"><svg viewBox="0 0 860 400" role="img" aria-label="Monthly ride volume, members versus casual riders"></svg>
+      <div class="legend"><span><b class="b-member"></b>MEMBER</span><span><b class="b-casual"></b>CASUAL</span><span style="color:rgba(242,237,228,0.4)">JAN 2026 — DATA UNAVAILABLE (DOCUMENTED GAP)</span></div>
+    </div>
+  </section>
+
+  <!-- ============ CHART 3: HOURLY ============ -->
+  <section class="rsec alt">
+    <p class="eyebrow reveal">04 — SHAPE OF A DAY</p>
+    <h2 class="reveal">Two rush-hour spikes vs one long afternoon.</h2>
+    <p class="lead reveal">The hourly profile is the clearest behavioral fingerprint: members spike at 8 AM and 5 PM —
+       textbook commuting — while casual riding builds through the morning into one long leisure afternoon.</p>
+    <div class="chart-wrap reveal" data-chart="hour"><svg viewBox="0 0 860 400" role="img" aria-label="Rides by hour of day, members versus casual riders"></svg>
+      <div class="legend"><span><b class="b-member"></b>MEMBER</span><span><b class="b-casual"></b>CASUAL</span></div>
+    </div>
+  </section>
+
+  <!-- ============ CHART 4: DURATION + TYPE ============ -->
+  <section class="rsec">
+    <p class="eyebrow reveal">05 — DURATION &amp; EQUIPMENT</p>
+    <h2 class="reveal">Casual rides run 58% longer. Bike choice? A wash.</h2>
+    <p class="lead reveal">Average casual ride: 19.0 minutes vs 12.0 for members (medians: 11.4 vs 8.6) — leisure use
+       versus short, purposeful trips. Rideable type, meanwhile, barely differentiates the groups: both favor electric
+       bikes at nearly identical rates. A useful non-finding that rules out equipment-led strategies.</p>
+    <div class="chart-wrap reveal" data-chart="dur"><svg viewBox="0 0 860 300" role="img" aria-label="Average ride duration and rideable type mix"></svg>
+      <div class="legend"><span><b class="b-member"></b>MEMBER</span><span><b class="b-casual"></b>CASUAL</span></div>
+    </div>
+  </section>
+
+  <!-- ============ RECOMMENDATIONS ============ -->
+  <section class="rsec alt">
+    <p class="eyebrow reveal">06 — RECOMMENDATIONS</p>
+    <h2 class="reveal">Three moves, all backed by the data above.</h2>
+    <div class="rec reveal">
+      <span class="rec-num">R.01</span>
+      <div><h3>LAUNCH A WEEKEND-FOCUSED MEMBERSHIP CAMPAIGN</h3>
+      <p>Casual demand concentrates on Saturday and Sunday. Promote a membership tier that highlights weekend value,
+         and target casual riders in-app on weekend mornings — when intent is highest.</p></div>
+    </div>
+    <div class="rec reveal">
+      <span class="rec-num">R.02</span>
+      <div><h3>POSITION MEMBERSHIP AROUND LEISURE, NOT JUST COMMUTING</h3>
+      <p>Casuals take longer, recreational rides. Frame messaging around unlimited leisure time and savings on long
+         rides — not commuter efficiency, which appeals to riders who are already members.</p></div>
+    </div>
+    <div class="rec reveal">
+      <span class="rec-num">R.03</span>
+      <div><h3>RUN SEASONAL CONVERSION PUSHES IN PEAK MONTHS</h3>
+      <p>Casual ridership peaks May–September. Concentrate acquisition spend and introductory offers in that window,
+         when casual riders are most active and most receptive to converting.</p></div>
+    </div>
+    <div class="cta-row reveal">
+      <a class="work-link" href="reports/Cyclistic_Report.pdf" target="_blank" rel="noopener">DOWNLOAD THE FULL REPORT (PDF) ↗</a>
+      <a class="work-link" href="index.html">← BACK TO PORTFOLIO</a>
+    </div>
+  </section>
+
+  <footer class="outro" style="min-height:auto; padding-top:70px;">
+    <footer>
+      <span>© 2026 LESTER HARVEY</span>
+      <span>ANALYSIS: PYTHON · PANDAS · SQL — CHARTS DRAWN LIVE FROM ANALYSIS OUTPUT</span>
+      <span>DATA: DIVVY / MOTIVATE INTL. PUBLIC LICENSE</span>
+    </footer>
+  </footer>
+
+  <script src="https://unpkg.com/lenis@1.3.21/dist/lenis.min.js"></script>
+  <script>window.SCRUB_SECTIONS = [];</script>
+  <script src="scroll-cinematic.js"></script>
+  <script>
+  /* ================= Cyclistic charts — data straight from analysis output ================= */
+  const DATA = {
+    dow: {
+      days: ["MON","TUE","WED","THU","FRI","SAT","SUN"],
+      member: [550128,615722,619433,641283,588609,504538,434446],
+      casual: [261892,248574,249660,288271,352538,470188,381818],
+    },
+    month: {
+      labels: ["MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC","JAN","FEB","MAR","APR","MAY"],
+      member: [319750,386709,439965,452355,449202,421921,257292,112408,null,160251,229121,316675,408484],
+      casual: [182263,291138,322505,337246,264772,223569,98871,27992,null,41088,87631,131223,244619],
+    },
+    hour: {
+      member: [36018,22110,13140,8689,9734,37534,110448,219948,285134,183166,157783,184578,210200,206035,210255,263893,374586,427646,331972,230120,160307,124737,90178,55948],
+      casual: [44304,28358,18686,10335,8150,13002,29413,54693,78469,78252,95088,121285,143953,148979,156903,174293,200082,216517,185608,139013,100037,84823,71467,51231],
+    },
+    dur: { member: 12.05, casual: 19.03, memberMed: 8.64, casualMed: 11.35,
+           ebikeShare: { member: 65.5, casual: 68.1 } },
+  };
+  const GOLD = "#e8b04b", BLUE = "#7aa7d9", DIM = "rgba(242,237,228,0.45)";
+  const fmtK = v => v >= 1e6 ? (v/1e6).toFixed(1)+"M" : Math.round(v/1e3)+"K";
+  const NS = "http://www.w3.org/2000/svg";
+  function el(name, attrs, parent) {
+    const e = document.createElementNS(NS, name);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function gridAxis(svg, x0, y0, w, h, maxV, steps) {
+    for (let i = 0; i <= steps; i++) {
+      const y = y0 + h - (h * i / steps);
+      el("line", { x1: x0, y1: y, x2: x0 + w, y2: y, class: "grid-line" }, svg);
+      const t = el("text", { x: x0 - 10, y: y + 3, "text-anchor": "end", class: "axis-label" }, svg);
+      t.textContent = fmtK(maxV * i / steps);
+    }
+  }
+
+  function drawDow(svg) {
+    const { days, member, casual } = DATA.dow;
+    const x0 = 64, y0 = 20, w = 780, h = 330, maxV = 700000;
+    gridAxis(svg, x0, y0, w, h, maxV, 5);
+    const slot = w / days.length, bw = slot * 0.28;
+    days.forEach((d, i) => {
+      const cx = x0 + slot * i + slot / 2;
+      [[member[i], GOLD, -bw - 3], [casual[i], BLUE, 3]].forEach(([v, c, off]) => {
+        const bh = h * v / maxV;
+        const r = el("rect", { x: cx + off, y: y0 + h, width: bw, height: 0, rx: 4, fill: c }, svg);
+        r.style.transition = "y 0.9s cubic-bezier(.2,.8,.2,1) " + (i * 0.06) + "s, height 0.9s cubic-bezier(.2,.8,.2,1) " + (i * 0.06) + "s";
+        requestAnimationFrame(() => requestAnimationFrame(() => { r.setAttribute("y", y0 + h - bh); r.setAttribute("height", bh); }));
+      });
+      const t = el("text", { x: cx, y: y0 + h + 24, "text-anchor": "middle", class: "axis-label" }, svg);
+      t.textContent = d;
+    });
+    const a = el("text", { x: x0 + slot * 5.5, y: y0 + 60, "text-anchor": "middle", class: "anno c" }, svg);
+    a.textContent = "CASUAL VOLUME ~2× MIDWEEK";
+  }
+
+  function linePath(vals, x0, y0, w, h, maxV) {
+    const n = vals.length; let d = "", started = false;
+    vals.forEach((v, i) => {
+      if (v == null) { started = false; return; }
+      const x = x0 + w * i / (n - 1), y = y0 + h - h * v / maxV;
+      d += (started ? " L" : " M") + x.toFixed(1) + " " + y.toFixed(1);
+      started = true;
+    });
+    return d;
+  }
+  function animLine(svg, d, color) {
+    const p = el("path", { d, fill: "none", stroke: color, "stroke-width": 3, "stroke-linecap": "round" }, svg);
+    const len = p.getTotalLength();
+    p.style.strokeDasharray = len; p.style.strokeDashoffset = len;
+    p.style.transition = "stroke-dashoffset 1.6s ease-out 0.2s";
+    requestAnimationFrame(() => requestAnimationFrame(() => { p.style.strokeDashoffset = 0; }));
+  }
+
+  function drawMonth(svg) {
+    const { labels, member, casual } = DATA.month;
+    const x0 = 64, y0 = 20, w = 780, h = 330, maxV = 500000;
+    gridAxis(svg, x0, y0, w, h, maxV, 5);
+    labels.forEach((m, i) => {
+      const t = el("text", { x: x0 + w * i / (labels.length - 1), y: y0 + h + 24, "text-anchor": "middle", class: "axis-label" }, svg);
+      t.textContent = m;
+    });
+    // gap shading for Jan
+    const gx = x0 + w * 7.5 / 12, gw = w / 12;
+    el("rect", { x: gx, y: y0, width: gw, height: h, fill: "rgba(242,237,228,0.03)" }, svg);
+    animLine(svg, linePath(member, x0, y0, w, h, maxV), GOLD);
+    animLine(svg, linePath(casual, x0, y0, w, h, maxV), BLUE);
+    const a = el("text", { x: x0 + w * 7 / 12, y: y0 + h - 18, "text-anchor": "middle", class: "anno c" }, svg);
+    a.textContent = "DEC: 28K CASUAL VS 112K MEMBER";
+  }
+
+  function drawHour(svg) {
+    const { member, casual } = DATA.hour;
+    const x0 = 64, y0 = 20, w = 780, h = 330, maxV = 450000;
+    gridAxis(svg, x0, y0, w, h, maxV, 5);
+    for (let hh = 0; hh < 24; hh += 3) {
+      const t = el("text", { x: x0 + w * hh / 23, y: y0 + h + 24, "text-anchor": "middle", class: "axis-label" }, svg);
+      t.textContent = (hh === 0 ? "12AM" : hh < 12 ? hh + "AM" : hh === 12 ? "12PM" : (hh - 12) + "PM");
+    }
+    animLine(svg, linePath(member, x0, y0, w, h, maxV), GOLD);
+    animLine(svg, linePath(casual, x0, y0, w, h, maxV), BLUE);
+    const a1 = el("text", { x: x0 + w * 8 / 23, y: y0 + 84, "text-anchor": "middle", class: "anno" }, svg);
+    a1.textContent = "8AM COMMUTE";
+    const a2 = el("text", { x: x0 + w * 17 / 23, y: y0 + 18, "text-anchor": "middle", class: "anno" }, svg);
+    a2.textContent = "5PM COMMUTE";
+  }
+
+  function drawDur(svg) {
+    const d = DATA.dur;
+    const x0 = 240, w = 540, bh = 34;
+    const rows = [
+      ["AVG RIDE (MIN)", d.member, d.casual, 22],
+      ["MEDIAN RIDE (MIN)", d.memberMed, d.casualMed, 22],
+      ["E-BIKE SHARE (%)", d.ebikeShare.member, d.ebikeShare.casual, 100],
+    ];
+    rows.forEach((row, ri) => {
+      const [label, mv, cv, maxV] = row;
+      const yBase = 30 + ri * 90;
+      const t = el("text", { x: x0 - 18, y: yBase + bh, "text-anchor": "end", class: "axis-label" }, svg);
+      t.textContent = label;
+      [[mv, GOLD, 0], [cv, BLUE, bh + 6]].forEach(([v, c, off]) => {
+        const bwv = w * v / maxV;
+        const r = el("rect", { x: x0, y: yBase + off, width: 0, height: bh, rx: 5, fill: c }, svg);
+        r.style.transition = "width 1.1s cubic-bezier(.2,.8,.2,1) " + (ri * 0.15) + "s";
+        requestAnimationFrame(() => requestAnimationFrame(() => r.setAttribute("width", bwv)));
+        const vt = el("text", { x: x0 + bwv + 12, y: yBase + off + bh / 2 + 4, class: "anno" + (c === BLUE ? " c" : "") }, svg);
+        vt.textContent = (maxV === 100 ? v.toFixed(1) + "%" : v.toFixed(1));
+      });
+    });
+  }
+
+  const DRAW = { dow: drawDow, month: drawMonth, hour: drawHour, dur: drawDur };
+  const chartIO = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (!e.isIntersecting) return;
+      const kind = e.target.dataset.chart;
+      DRAW[kind](e.target.querySelector("svg"));
+      chartIO.unobserve(e.target);
+    });
+  }, { threshold: 0.35 });
+  document.querySelectorAll("[data-chart]").forEach((c) => chartIO.observe(c));
+  </script>
+</body>
+</html>
