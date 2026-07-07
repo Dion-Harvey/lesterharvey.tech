@@ -235,8 +235,12 @@
       const r2 = el("rect", { x: x0, y, width: 0, height: bh, rx: 3, fill: GOLD }, svg);
       r1.style.transition = r2.style.transition = "width 0.9s cubic-bezier(.2,.8,.2,1) " + (i * 0.04) + "s";
       requestAnimationFrame(() => requestAnimationFrame(() => { r1.setAttribute("width", bw); r2.setAttribute("width", ew); }));
-      const v = el("text", { x: x0 + bw + 10, y: y + bh - 3, class: "anno" }, svg);
-      v.textContent = s.bikes + " (" + s.ebikes + " E)";
+      const label = s.bikes + " BIKES · " + s.ebikes + " ELECTRIC";
+      const fits = x0 + bw + 10 + label.length * 6.8 <= 850;
+      const v = fits
+        ? el("text", { x: x0 + bw + 10, y: y + bh - 3, class: "anno" }, svg)
+        : el("text", { x: x0 + bw - 10, y: y + bh - 3, "text-anchor": "end", class: "anno", style: "fill: #171106;" }, svg);
+      v.textContent = label;
     });
     const lg = el("text", { x: x0, y: 20 + stations.length * rowH + 14, class: "axis-label" }, svg);
     lg.textContent = "SOLID = ELECTRIC · TINT = TOTAL BIKES AVAILABLE";
