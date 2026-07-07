@@ -177,27 +177,41 @@
       const t = el("text", { x: x0 - 10, y: y + 3, "text-anchor": "end", class: "axis-label" }, svg);
       t.textContent = Math.round(maxV * i / 4 / 1000 * 10) / 10 + "K";
     }
-    const n = Math.max(vals.length, 2);
-    let d = "";
-    vals.forEach((v, i) => {
-      const x = x0 + w * i / (336 - 1), y = y0 + h - h * v / maxV;
-      d += (i ? " L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
-    });
-    if (vals.length === 1) {
-      el("circle", { cx: x0, cy: y0 + h - h * vals[0] / maxV, r: 6, fill: GOLD }, svg);
+    // spread collected points across the full width; the window is a
+    // ratio of collected runs, so the chart always reads as complete
+    const n = vals.length;
+    const px = (i) => n === 1 ? x0 + w / 2 : x0 + w * i / (n - 1);
+    if (n === 1) {
+      el("circle", { cx: px(0), cy: y0 + h - h * vals[0] / maxV, r: 6, fill: GOLD }, svg);
     } else {
-      const p = el("path", { d, fill: "none", stroke: GOLD, "stroke-width": 2.5, "stroke-linecap": "round" }, svg);
+      let d = "", area = "";
+      vals.forEach((v, i) => {
+        const x = px(i), y = y0 + h - h * v / maxV;
+        d += (i ? " L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
+        area += (i ? " L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
+      });
+      area += " L" + px(n - 1).toFixed(1) + " " + (y0 + h) + " L" + px(0).toFixed(1) + " " + (y0 + h) + " Z";
+      el("path", { d: area, fill: "rgba(232,176,75,0.09)", stroke: "none" }, svg);
+      const p = el("path", { d, fill: "none", stroke: GOLD, "stroke-width": 2.5, "stroke-linecap": "round", "stroke-linejoin": "round" }, svg);
       const len = p.getTotalLength(); p.style.strokeDasharray = len; p.style.strokeDashoffset = len;
       p.style.transition = "stroke-dashoffset 1.6s ease-out 0.2s";
       requestAnimationFrame(() => requestAnimationFrame(() => p.style.strokeDashoffset = 0));
     }
-    history.forEach((pt, i) => {
-      if (i % 48 === 0) {
-        const x = x0 + w * i / (336 - 1);
-        const t = el("text", { x, y: y0 + h + 24, "text-anchor": "middle", class: "axis-label" }, svg);
-        t.textContent = new Date(pt.t).toLocaleDateString("en-US", { timeZone: "America/Chicago", weekday: "short" }).toUpperCase();
-      }
-    });
+    // ~6 time ticks from the actual timestamps collected so far
+    const tickCount = Math.min(6, n);
+    let prevLabel = null;
+    for (let k = 0; k < tickCount; k++) {
+      const i = tickCount === 1 ? 0 : Math.round(k * (n - 1) / (tickCount - 1));
+      const label = new Date(history[i].t).toLocaleString("en-US", {
+        timeZone: "America/Chicago",
+        ...(n >= 336 ? { weekday: "short" } : { weekday: "short", hour: "numeric" }),
+      }).toUpperCase().replace(",", " ");
+      if (label === prevLabel) continue;
+      prevLabel = label;
+      const anchor = k === 0 ? "start" : k === tickCount - 1 ? "end" : "middle";
+      const t = el("text", { x: px(i), y: y0 + h + 24, "text-anchor": anchor, class: "axis-label" }, svg);
+      t.textContent = label;
+    }
     const pct = Math.round(history.length / 336 * 100);
     document.getElementById("trend-note").textContent =
       history.length >= 336 ? "FULL 7-DAY WINDOW · " + history.length + " PIPELINE RUNS"
@@ -210,8 +224,12 @@
     const maxV = Math.max(...stations.map(s => s.bikes)) * 1.1;
     stations.forEach((s, i) => {
       const y = 20 + i * rowH;
-      const t = el("text", { x: x0 - 16, y: y + bh - 3, "text-anchor": "end", class: "axis-label", style: "fill: rgba(242,237,228,0.75); font-size: 10.5px;" }, svg);
-      t.textContent = s.name.toUpperCase();
+      const t = el("text", { x: x0 - 16, y: y + bh - 3, "text-anchor": "end",
+        style: "fill: rgba(242,237,228,0.75); font-size: 11.5px; font-family: 'Sora', sans-serif; letter-spacing: 0.03em;" }, svg);
+      const name = s.name.length > 32 ? s.name.slice(0, 31) + "…" : s.name;
+      t.textContent = name.toUpperCase();
+      const tip = el("title", {}, t);
+      tip.textContent = s.name;
       const bw = w * s.bikes / maxV, ew = w * s.ebikes / maxV;
       const r1 = el("rect", { x: x0, y, width: 0, height: bh, rx: 3, fill: "rgba(232,176,75,0.35)" }, svg);
       const r2 = el("rect", { x: x0, y, width: 0, height: bh, rx: 3, fill: GOLD }, svg);
