@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Local preview only: keeps the browser from serving a stale build while iterating. -->
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <title>Amaury Sanders — Fashion Designer &amp; Illustrator</title>
+  <meta name="description" content="The portfolio of fashion designer and illustrator Amaury Sanders. Senior collection Code[2KD] — every look in three acts: sketch, toile, runway." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=3" />
+  <noscript><style>.reveal, .reveal-line { opacity: 1 !important; transform: none !important; }</style></noscript>
+</head>
+<body>
+
+  <!-- ======== Fixed tab navigation ======== -->
+  <header class="nav" id="nav">
+    <a class="nav-brand" href="#home" data-nav>AMAURY<span>·</span>SANDERS</a>
+    <nav class="nav-tabs" aria-label="Primary">
+      <a href="#home"          data-nav class="tab is-active">Home</a>
+      <a href="#collection"    data-nav class="tab">Collection</a>
+      <a href="#editorial"     data-nav class="tab">Editorial</a>
+      <a href="#illustrations" data-nav class="tab">Illustrations</a>
+      <a href="#about"         data-nav class="tab">About</a>
+      <a href="#contact"       data-nav class="tab">Contact</a>
+    </nav>
+  </header>
+
+  <!-- ======== Cinematic scroll hero: sketch → muslin → toile → runway ======== -->
+  <section class="cinematic" id="home">
+    <div class="sticky">
+      <canvas id="hero-canvas" aria-hidden="true"></canvas>
+      <div class="vignette"></div>
+
+      <div class="overlay">
+        <div class="reveal-line hero-title" data-in="-0.35" data-out="0.26" style="opacity:1">
+          <p class="overline">Fashion Designer &amp; Illustrator</p>
+          <h1>AMAURY<br/>SANDERS</h1>
+        </div>
+        <div class="reveal-line hero-title" data-in="0.32" data-out="0.56">
+          <h2>Every look begins as a<br/><em>single sketch.</em></h2>
+        </div>
+        <div class="reveal-line hero-title" data-in="0.62" data-out="1.00">
+          <h2>Sketch. Toile. <em>Runway.</em></h2>
+          <p class="overline low">— scroll to walk the process, or use the tabs above —</p>
+        </div>
+      </div>
+
+      <div class="progress"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="scroll-hint" id="scroll-hint">SCROLL — OR USE THE TABS ABOVE ▾</div>
+    </div>
+  </section>
+
+  <!-- ======== Senior collection: Code[2KD] ======== -->
+  <section class="collection" id="collection">
+    <div class="section-head reveal">
+      <p class="overline gold">Senior Collection — 2026</p>
+      <h2 class="display">Code[2KD]</h2>
+      <p class="lede">A collection that redefines the modern school uniform and asks whether uniformity
+         is more important than individuality. Drawing on the original Christ's Hospital uniform and
+         Amaury's own childhood dress code, every look carries a deliberate dress-code violation.
+         Each design is shown in three acts, side by side — the first sketch, the working toile,
+         and the finished look.</p>
+      <div class="look-chips">
+        <a href="#the-pleat" data-nav>№1 The Pleat</a>
+        <a href="#first-offense" data-nav>№2 First Offense</a>
+        <a href="#the-hood" data-nav>№3 The Hood</a>
+      </div>
+    </div>
+
+    <!-- Look 1 -->
+    <article class="look" id="the-pleat">
+      <header class="look-head reveal">
+        <span class="look-no">№1</span>
+        <div>
+          <h3>The Pleat</h3>
+          <p>An oversized felted-plaid knit over a pleated uniform skirt —
+             the schoolgirl staple, blown out of proportion.</p>
+        </div>
+      </header>
+      <div class="triptych">
+        <figure class="phase-card reveal" data-look="The Pleat" data-phase="Act I — The Sketch">
+          <div class="phase-label"><i>Act I</i><b>The Sketch</b></div>
+          <div class="phase-img"><img src="assets/pleat-sketch.jpg" alt="First croquis of The Pleat — cropped top, giant sleeves, pleated plaid skirt" loading="lazy" /></div>
+          <figcaption>The first croquis on toned paper — a cropped silhouette, giant sleeves, a pleated hem. Margin notes: “plaid.” “yellow.”</figcaption>
+        </figure>
+        <figure class="phase-card reveal" data-look="The Pleat" data-phase="Act II — The Toile">
+          <div class="phase-label"><i>Act II</i><b>The Toile</b></div>
+          <div class="phase-img"><img src="assets/pleat-toile.jpg" alt="Felted plaid balloon sleeves fitted on the dress form" loading="lazy" /></div>
+          <figcaption>The balloon sleeves are fitted in felted plaid on the form until the proportion reads from across the room.</figcaption>
+        </figure>
+        <figure class="phase-card reveal" data-look="The Pleat" data-phase="Act III — The Look">
+          <div class="phase-label"><i>Act III</i><b>The Look</b></div>
+          <div class="phase-img"><img src="assets/pleat-final.jpg" alt="Finished look — oversized needle-felted plaid knit with pleated skirt and yellow hi-top boots" loading="lazy" /></div>
+          <figcaption>Needle-felted tartan in gray, blue and yellow — pleats swinging over hand-painted hi-tops.</figcaption>
+        </figure>
+      </div>
+    </article>
+
+    <!-- Look 2 -->
+    <article class="look" id="first-offense">
+      <header class="look-head reveal">
+        <span class="look-no">№2</span>
+        <div>
+          <h3>First Offense</h3>
+          <p>An unzipped plaid overshirt and boxers-turned-shorts —
+             sagging in the back, exactly as the dress code forbids.</p>
+        </div>
+      </header>
+      <div class="triptych">
+        <figure class="phase-card reveal" data-look="First Offense" data-phase="Act I — The Sketch">
+          <div class="phase-label"><i>Act I</i><b>The Sketch</b></div>
+          <div class="phase-img"><img src="assets/offense-sketch.jpg" alt="Croquis of First Offense — oversized shirt and tie with pinstripe shorts" loading="lazy" /></div>
+          <figcaption>The croquis that started it: oversized shirt and tie, pinstripe shorts — “pants attached to boxers, sagging in the back.”</figcaption>
+        </figure>
+        <figure class="phase-card reveal" data-look="First Offense" data-phase="Act II — The Sketchbook">
+          <div class="phase-label"><i>Act II</i><b>The Sketchbook</b></div>
+          <div class="phase-img"><img src="assets/offense-toile.jpg" alt="Sketchbook spread titled Code[2KD] First Offense with fabric and button tests" loading="lazy" /></div>
+          <figcaption>The book that rules the fittings — <em>Code[2KD], First Offense</em> — cyanotype tests, buttons and fabric pulls pinned in place.</figcaption>
+        </figure>
+        <figure class="phase-card reveal" data-look="First Offense" data-phase="Act III — The Look">
+          <div class="phase-label"><i>Act III</i><b>The Look</b></div>
+          <div class="phase-img"><img src="assets/offense-final.jpg" alt="Finished look — cropped polo, zip plaid overshirt, felted shorts and paint-splattered hi-tops" loading="lazy" /></div>
+          <figcaption>The finished offense — cropped polo, zip plaid overshirt, felted shorts and paint-splattered hi-tops.</figcaption>
+        </figure>
+      </div>
+    </article>
+
+    <!-- Look 3 -->
+    <article class="look" id="the-hood">
+      <header class="look-head reveal">
+        <span class="look-no">№3</span>
+        <div>
+          <h3>The Hood</h3>
+          <p>A giant tie turned hood — uniform neckwear reimagined as cover.</p>
+        </div>
+      </header>
+      <div class="triptych">
+        <figure class="phase-card reveal" data-look="The Hood" data-phase="Act I — The Sketch">
+          <div class="phase-label"><i>Act I</i><b>The Sketch</b></div>
+          <div class="phase-img"><img src="assets/hood-sketch.jpg" alt="Studio table with painted plaid hoodie study and pencil sketches" loading="lazy" /></div>
+          <figcaption>Studio-table sketches: a painted plaid hoodie study beside the note that named the look — “giant tie turned hoodie.”</figcaption>
+        </figure>
+        <figure class="phase-card reveal" data-look="The Hood" data-phase="Act II — The Toile">
+          <div class="phase-label"><i>Act II</i><b>The Toile</b></div>
+          <div class="phase-img"><img src="assets/hood-toile.jpg" alt="Muslin toile of the hooded look, tied and fitted on a model" loading="lazy" /></div>
+          <figcaption>The muslin toile, tied and hooded on the stand-in — proportion first, plaid later.</figcaption>
+        </figure>
+        <figure class="phase-card reveal" data-look="The Hood" data-phase="Act III — The Look">
+          <div class="phase-label"><i>Act III</i><b>The Look</b></div>
+          <div class="phase-img"><img src="assets/hood-final.jpg" alt="Finished look — felted hooded capelet over drop-waist plaid trousers, in motion" loading="lazy" /></div>
+          <figcaption>The hood in motion — felted capelet over drop-waist plaid trousers, shot mid-stride.</figcaption>
+        </figure>
+      </div>
+    </article>
+  </section>
+
+  <!-- ======== Editorial ======== -->
+  <section class="gallery" id="editorial">
+    <div class="section-head reveal">
+      <p class="overline gold">Editorial</p>
+      <h2 class="display">On camera.</h2>
+      <p class="lede">Code[2KD] worn, sat in, leaned on and lived in — the collection photographed
+         the way a uniform actually gets used.</p>
+    </div>
+    <div class="strip reveal" aria-label="Editorial photographs">
+      <figure class="phase-card strip-card" data-look="Code[2KD] — Editorial" data-phase="Photograph">
+        <div class="phase-img"><img src="assets/ed-1.jpg" alt="Editorial photograph — model seated against a white brick wall in plaid" loading="lazy" /></div>
+        <figcaption class="visually-hidden">Editorial photograph from the Code[2KD] shoot.</figcaption>
+      </figure>
+      <figure class="phase-card strip-card" data-look="Code[2KD] — Editorial" data-phase="Photograph">
+        <div class="phase-img"><img src="assets/ed-3.jpg" alt="Editorial photograph — model seated on concrete steps in plaid and hi-tops" loading="lazy" /></div>
+        <figcaption class="visually-hidden">Editorial photograph from the Code[2KD] shoot.</figcaption>
+      </figure>
+      <figure class="phase-card strip-card" data-look="Code[2KD] — Editorial" data-phase="Photograph">
+        <div class="phase-img"><img src="assets/ed-4.jpg" alt="Editorial photograph — model at a table in a plaid polo" loading="lazy" /></div>
+        <figcaption class="visually-hidden">Editorial photograph from the Code[2KD] shoot.</figcaption>
+      </figure>
+      <figure class="phase-card strip-card" data-look="Code[2KD] — Editorial" data-phase="Photograph">
+        <div class="phase-img"><img src="assets/ed-5.jpg" alt="Editorial photograph — seated model in gray and plaid" loading="lazy" /></div>
+        <figcaption class="visually-hidden">Editorial photograph from the Code[2KD] shoot.</figcaption>
+      </figure>
+      <figure class="phase-card strip-card" data-look="Code[2KD] — Editorial" data-phase="Photograph">
+        <div class="phase-img"><img src="assets/ed-2.jpg" alt="Editorial photograph — close crop of a model's face" loading="lazy" /></div>
+        <figcaption class="visually-hidden">Editorial photograph from the Code[2KD] shoot.</figcaption>
+      </figure>
+      <figure class="phase-card strip-card" data-look="Code[2KD] — Editorial" data-phase="Photograph">
+        <div class="phase-img"><img src="assets/ed-6.jpg" alt="Editorial photograph — model in a blue plaid romper" loading="lazy" /></div>
+        <figcaption class="visually-hidden">Editorial photograph from the Code[2KD] shoot.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ======== Illustrations ======== -->
+  <section class="gallery" id="illustrations">
+    <div class="section-head reveal">
+      <p class="overline gold">Illustrations</p>
+      <h2 class="display">Drawn worlds.</h2>
+      <p class="lede">Before the shears come out, everything lives on paper — croquis, lineups
+         and characters from Code[2KD] and beyond.</p>
+    </div>
+    <div class="ill-grid reveal">
+      <figure class="phase-card" data-look="Illustration" data-phase="From the sketchbook"><div class="phase-img"><img src="assets/ill-1.jpg" alt="Fashion illustration — figure with pink feathered piece on black" loading="lazy" /></div><figcaption class="visually-hidden">Fashion illustration.</figcaption></figure>
+      <figure class="phase-card" data-look="Illustration" data-phase="From the sketchbook"><div class="phase-img"><img src="assets/ill-2.jpg" alt="Fashion illustration — cream halter look with black tulle" loading="lazy" /></div><figcaption class="visually-hidden">Fashion illustration.</figcaption></figure>
+      <figure class="phase-card" data-look="Illustration" data-phase="From the sketchbook"><div class="phase-img"><img src="assets/ill-3.jpg" alt="Fashion illustration — white feathered tutu on black" loading="lazy" /></div><figcaption class="visually-hidden">Fashion illustration.</figcaption></figure>
+      <figure class="phase-card" data-look="Illustration" data-phase="From the sketchbook"><div class="phase-img"><img src="assets/ill-4.jpg" alt="Fashion illustration — pink and black feathered tutu on black" loading="lazy" /></div><figcaption class="visually-hidden">Fashion illustration.</figcaption></figure>
+      <figure class="phase-card" data-look="Illustration" data-phase="From the sketchbook"><div class="phase-img"><img src="assets/ill-5.jpg" alt="Fashion illustration — plaid polo with tights and yellow lace-up boots" loading="lazy" /></div><figcaption class="visually-hidden">Fashion illustration.</figcaption></figure>
+      <figure class="phase-card" data-look="Illustration" data-phase="From the sketchbook"><div class="phase-img"><img src="assets/ill-6.jpg" alt="Fashion illustration — yellow hoodie look from Code[2KD]" loading="lazy" /></div><figcaption class="visually-hidden">Fashion illustration.</figcaption></figure>
+      <figure class="phase-card" data-look="Illustration" data-phase="From the sketchbook"><div class="phase-img"><img src="assets/ill-7.jpg" alt="Fashion illustration — three teal plaid uniform looks" loading="lazy" /></div><figcaption class="visually-hidden">Fashion illustration.</figcaption></figure>
+      <figure class="phase-card" data-look="Illustration" data-phase="From the sketchbook"><div class="phase-img"><img src="assets/ill-8.jpg" alt="Fashion illustration — yellow and plaid dress look" loading="lazy" /></div><figcaption class="visually-hidden">Fashion illustration.</figcaption></figure>
+    </div>
+  </section>
+
+  <!-- ======== About ======== -->
+  <section class="about" id="about">
+    <div class="about-inner reveal">
+      <p class="overline gold">About</p>
+      <h2 class="display">The designer.</h2>
+      <p>Amaury Sanders is a fashion designer and illustrator whose senior collection,
+         <em>Code[2KD]</em>, redefines the modern school uniform. Her work moves from expressive
+         character illustration to needle-felted tartans, and she documents every look in
+         three acts — the first sketch, the working toile, and the finished garment —
+         because for Amaury, the process is the point.</p>
+      <p class="quote">“Is uniformity more important than individuality?”</p>
+    </div>
+    <div class="studio-grid reveal" aria-label="In the studio">
+      <figure class="phase-card" data-look="In the Studio" data-phase="Process"><div class="phase-img"><img src="assets/studio-1.jpg" alt="Felted plaid pleated skirt on a hanger" loading="lazy" /></div><figcaption class="visually-hidden">The felted plaid skirt, off the body.</figcaption></figure>
+      <figure class="phase-card" data-look="In the Studio" data-phase="Process"><div class="phase-img"><img src="assets/studio-2.jpg" alt="Open sketchbook with rooftop reference photos and a pencil character drawing" loading="lazy" /></div><figcaption class="visually-hidden">The sketchbook, mid-thought.</figcaption></figure>
+      <figure class="phase-card" data-look="In the Studio" data-phase="Process"><div class="phase-img"><img src="assets/studio-3.jpg" alt="Muslin balloon sleeve draped on a dress form" loading="lazy" /></div><figcaption class="visually-hidden">Muslin sleeve studies on the form.</figcaption></figure>
+      <figure class="phase-card" data-look="In the Studio" data-phase="Process"><div class="phase-img"><img src="assets/studio-4.jpg" alt="Hand-painted plaid hi-top sneakers on a chalk-drawn tic-tac-toe board" loading="lazy" /></div><figcaption class="visually-hidden">Hand-painted hi-tops.</figcaption></figure>
+    </div>
+    <div class="stats reveal">
+      <div><span class="stat-num" data-count="3">0</span><small>acts per look</small></div>
+      <div><span class="stat-num" data-count="19">0</span><small>process images in the archive</small></div>
+      <div><span class="stat-num" data-count="22">0</span><small>illustrations &amp; boards</small></div>
+    </div>
+  </section>
+
+  <!-- ======== Contact ======== -->
+  <section class="contact" id="contact">
+    <div class="contact-inner reveal">
+      <p class="overline gold">Contact</p>
+      <h2 class="display">Commissions &amp; collaborations.</h2>
+      <p>For commissions, press, collaborations or a closer look at Code[2KD],
+         write directly — every message is read by Amaury.</p>
+      <!-- Placeholders: swap for Amaury's real email + Instagram, then re-deploy. -->
+      <div class="contact-actions">
+        <span class="btn is-placeholder">Email — to be confirmed</span>
+        <span class="btn ghost is-placeholder">Instagram — to be confirmed</span>
+      </div>
+    </div>
+    <footer class="footer">
+      <span>© 2026 Amaury Sanders. All designs reserved.</span>
+      <span class="dim">Draft preview — look names &amp; contact details pending approval</span>
+    </footer>
+  </section>
+
+  <!-- Lightbox root (filled by app.js) -->
+  <div class="lightbox" id="lightbox" hidden></div>
+
+  <script src="https://unpkg.com/lenis@1.3.21/dist/lenis.min.js"></script>
+  <script>
+    window.SCRUB_SECTIONS = [
+      {
+        section: "#home",
+        frameCount: 180,
+        bg: "#0b0a0a",
+        framePath: (i) => `frames/hero/frame_${String(i).padStart(4, "0")}.jpg`
+      }
+    ];
+  </script>
+  <script src="app.js?v=2"></script>
+</body>
+</html>
