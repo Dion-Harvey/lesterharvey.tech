@@ -301,6 +301,32 @@ img { max-width: 100%; display: block; }
 }
 .grid-4 .phase-img { aspect-ratio: 3 / 4; }
 
+/* ---------- Illustrations ----------
+   Transparent PNG/WebP artwork on white: never cropped, never boxed.
+   Masonry columns so mixed 16:9 / 4:3 / 3:4 pieces each keep their shape. */
+.ill-masonry {
+  columns: 4;
+  column-gap: clamp(14px, 2.2vw, 34px);
+}
+.ill-item {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  margin: 0 0 clamp(14px, 2.2vw, 34px);
+  cursor: zoom-in;
+}
+.ill-item img {
+  width: 100%;
+  height: auto;              /* natural proportions — no cover-cropping */
+  background: none;          /* let the transparency read as the page */
+  border: 0;
+  transition: opacity 0.3s ease;
+}
+.ill-item:hover img { opacity: 0.62; }
+
+@media (max-width: 1100px) { .ill-masonry { columns: 3; } }
+@media (max-width: 760px)  { .ill-masonry { columns: 2; } }
+@media (max-width: 440px)  { .ill-masonry { columns: 1; } }
+
 /* ---------- About ---------- */
 .about-wrap {
   display: grid;
@@ -392,6 +418,9 @@ img { max-width: 100%; display: block; }
   margin: 0 auto;
   border: 1px solid var(--line);
 }
+/* Artwork with transparency: show the drawing alone — no frame, no fill. */
+.lightbox.is-art img { border: 0; background: none; }
+.lightbox.is-art { background: #fff; }
 .lightbox figcaption { margin-top: 14px; color: var(--muted); font-size: 13px; }
 .lightbox figcaption b {
   display: block;

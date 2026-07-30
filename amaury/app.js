@@ -90,23 +90,27 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
 
   /* ---------- Lightbox ---------- */
-  const cards = [...document.querySelectorAll(".phase-card")];
+  const cards = [...document.querySelectorAll(".phase-card, .ill-item")];
   const box = document.getElementById("lightbox");
   let lbIndex = -1;
 
   function render() {
     const card = cards[lbIndex];
     const img = card.querySelector("img");
+    const isArt = card.classList.contains("ill-item");
+    // Artwork opens as the original transparent PNG, shown alone on white.
+    const src = img.dataset.full || img.src;
     const cap = card.querySelector("figcaption");
     const text = cap && !cap.classList.contains("visually-hidden") ? cap.textContent : "";
+    box.classList.toggle("is-art", isArt);
     box.innerHTML = `
       <figure>
-        <img src="${img.src}" alt="${img.alt}" />
-        <figcaption>
+        <img src="${src}" alt="${img.alt}" />
+        ${isArt ? "" : `<figcaption>
           <span class="lb-phase">${card.dataset.phase || ""}</span>
           <b>${card.dataset.look || ""}</b>
           ${text}
-        </figcaption>
+        </figcaption>`}
       </figure>
       <button class="lb-close" type="button">Close</button>
       <button class="lb-prev" type="button">← Prev</button>
