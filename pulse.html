@@ -61,7 +61,7 @@
   </nav>
 
   <header class="report-hero">
-    <p class="eyebrow reveal"><span class="live-dot"></span>LIVE PIPELINE · UPDATES EVERY 30 MINUTES</p>
+    <p class="eyebrow reveal"><span class="live-dot"></span>LIVE PIPELINE · 30-MINUTE SCHEDULE</p>
     <h1 class="reveal">CHICAGO STATION <em>PULSE.</em></h1>
     <p class="sub reveal">The real-time sequel to the <a class="inline-link" href="cyclistic.html">Cyclistic analysis</a>:
        that project studied 6.2M historical rides — this one runs a living pipeline on the same system. Every 30 minutes,
@@ -86,10 +86,12 @@
 
   <!-- Trend -->
   <section class="rsec">
-    <p class="eyebrow reveal">01 — SEVEN-DAY PULSE</p>
-    <h2 class="reveal">Citywide bikes available, every 30 minutes.</h2>
-    <p class="lead reveal">Each point is one pipeline run. The daily heartbeat — bikes drained by the morning commute,
-       rebalanced overnight — emerges as the rolling window fills.</p>
+    <p class="eyebrow reveal">01 — ROLLING PULSE</p>
+    <h2 class="reveal">Citywide bikes available, one point per pipeline run.</h2>
+    <p class="lead reveal">A rolling 336-run window on a 30-minute schedule. The daily heartbeat — bikes drained by
+       the morning commute, rebalanced overnight — reads straight off the line. Hosted-runner scheduling is
+       best-effort, so the window covers a little more than its nominal seven days; the caption below reports
+       the span actually captured.</p>
     <div class="chart-wrap reveal"><svg id="trend" viewBox="0 0 860 380" role="img" aria-label="Citywide bikes available over the last seven days"></svg></div>
     <p class="updated" id="trend-note"></p>
   </section>
@@ -154,8 +156,14 @@
 
   function setKpis(latest) {
     const pairs = [["k-stations", latest.stations_online], ["k-bikes", latest.bikes_available], ["k-ebikes", latest.ebikes_available], ["k-empty", Math.round(latest.stations_online * latest.pct_stations_empty / 100)]];
+    // Count up only when the page can actually animate. In a background tab
+    // requestAnimationFrame never fires, which would otherwise leave every KPI
+    // reading 0 for anyone who opens the link in a new tab.
+    const still = document.visibilityState !== "visible"
+      || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     pairs.forEach(([id, v]) => {
       const node = document.getElementById(id);
+      if (still) { node.textContent = fmt(v); return; }
       const t0 = performance.now(), dur = 1400;
       (function step(t) {
         const k = Math.min((t - t0) / dur, 1), e = 1 - Math.pow(1 - k, 3);
@@ -212,10 +220,14 @@
       const t = el("text", { x: px(i), y: y0 + h + 24, "text-anchor": anchor, class: "axis-label" }, svg);
       t.textContent = label;
     }
-    const pct = Math.round(history.length / 336 * 100);
+    // Report the window actually covered. GitHub's scheduler is best-effort,
+    // so 336 runs span more than the nominal 7 days whenever runs are skipped.
+    const spanDays = (new Date(history[n - 1].t) - new Date(history[0].t)) / 86400000;
+    const span = spanDays >= 1 ? spanDays.toFixed(1) + " DAYS" : Math.round(spanDays * 24) + " HOURS";
     document.getElementById("trend-note").textContent =
-      history.length >= 336 ? "FULL 7-DAY WINDOW · " + history.length + " PIPELINE RUNS"
-      : "COLLECTING HISTORY — " + history.length + " OF 336 RUNS CAPTURED (" + pct + "% OF THE 7-DAY WINDOW)";
+      n >= 336
+        ? "ROLLING WINDOW FULL — LAST " + span + " ACROSS " + n + " PIPELINE RUNS"
+        : "COLLECTING HISTORY — " + n + " OF 336 RUNS (" + span + " SO FAR)";
   }
 
   function drawStations(stations) {
